@@ -5,86 +5,38 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: epalomak <epalomak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/07/07 12:17:35 by epalomak          #+#    #+#             */
-/*   Updated: 2020/07/13 10:54:34 by epalomak         ###   ########.fr       */
+/*   Created: 2020/09/15 11:23:53 by epalomak          #+#    #+#             */
+/*   Updated: 2020/09/20 05:29:32 by epalomak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-int		do_line(void *mlx, void *win, int x1, int y1, int x2, int y2, int clr)
+int deal_key(int key, t_fdf *map)
 {
-	double	dx;
-	double	dy;
-	double	pxlx;
-	double	pxly;
-	int		pxl;
-
-	dx = x2 - x1;
-	dy = y2 - y1;
-	pxl = sqrt(dx * dx) + sqrt(dy * dy);
-	dx /= pxl;
-	dy /= pxl;
-	pxlx = x1;
-	pxly = y1;
-	while (pxl)
-	{
-		mlx_pixel_put(mlx, win, pxlx, pxly, clr);
-    	pxlx += dx;
-    	pxly += dy;
-    	--pxl;
-	}
+	if (key == 53)
+		mlx_destroy_window(map->mlx_ptr, map->win_ptr);
 	return (0);
 }
 
-int		do_square(void *mlx, void *win, int x1, int y1, int wd, int sqrw,  int clr)
-{
-	int sides;
-	int countx;
-	int county;
-	int tempx;
+int		main(int ac, char **av)
+{	
+	t_fdf *map;
 
-	countx = wd + x1;
-	county = wd / sqrw;
-	tempx = x1;
-	do_line (mlx, win, x1, y1, x1 + wd , y1, 0xFF8000);
-	do_line (mlx, win, x1, y1, x1 , y1 + wd, 0xFF8000);
-	do_line (mlx, win, x1 + wd, y1, x1 + wd , y1 + wd, 0xFF8000);
-	do_line (mlx, win, x1, y1 + wd, x1 + wd , y1 + wd, 0xFF8000);
-	
-	while(county)
+	if (!(map = (t_fdf*)malloc(sizeof(t_fdf))))
+		return (0);
+	if (ac == 2)
 	{
-		x1 = tempx;
-		while ( countx > x1)
-		{
-			do_line (mlx, win, x1, y1, x1 + sqrw , y1, 0xFF8000);
-			do_line (mlx, win, x1, y1, x1 , y1 + sqrw, 0xFF8000);
-			do_line (mlx, win, x1 + sqrw, y1, x1 + sqrw , y1 + sqrw, 0xFF8000);
-			do_line (mlx, win, x1, y1 + sqrw, x1 + sqrw , y1 + sqrw, 0xFF8000);
-			x1 += sqrw;
-		}
-		county -= 1;
-		y1 += sqrw;
+		read_file(map, av);
+		map->zoom = 20;
+		map->mlx_ptr = mlx_init();
+		map->win_ptr = mlx_new_window(map->mlx_ptr, 950, 950, av[1]);
+		draw_map(map);
+		printf("yo, yo, yo is it working\n");
+		mlx_key_hook(map->win_ptr, deal_key, map);
+		mlx_loop(map->mlx_ptr);
 	}
+	free(map);
 	return (0);
 }
 
-int     main(int ac, char **av)
-{
-	void	*mlx;
-	void	*win;
-	void 	*img;
-	int		x1;
-	int		y1;
-	int		x2;
-	int		y2;
-
-	x1 = 100;
-	y1 = 100;
-	x2 = 500;
-	y2 = 100;
-	mlx = mlx_init();
-	win = mlx_new_window(mlx, 500, 500, "testing");
-	do_square(mlx, win, x1, y1, 200, 10, 0xFF8000);
-	mlx_loop(mlx);
-}
