@@ -6,7 +6,7 @@
 /*   By: epalomak <epalomak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/18 14:28:48 by epalomak          #+#    #+#             */
-/*   Updated: 2020/09/22 16:24:26 by epalomak         ###   ########.fr       */
+/*   Updated: 2020/09/23 16:56:57 by epalomak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,62 +27,74 @@ void			isometric(t_fdf *map)
 	map->y1 = -(map->z1) + (prev_x + prev_y) * sin(0.523599);
 }
 
-int				my_abs(int x)
+void			draw(t_fdf *map, t_data final)
 {
-	if (x >= 0)
-		return (x * 1);
-	else
-		return (x * -1);
-}
-
-void			draw_pixel(t_fdf *map, int x0, int y0, int x1, int y1)
-{
-	map->dx = my_abs(x1 - x0);
-	map->dy = -my_abs(y1 - y0);
-	map->x_dir = (x0 < x1) ? 1 : -1;
-	map->y_dir = (y0 < y1) ? 1 : -1;
-	map->err = map->dx + map->dy;
+	map->deltax = my_abs(final.x1 - final.x0);
+	map->deltay = -my_abs(final.y1 - final.y0);
+	map->x_direc = (final.x0 < final.x1) ? 1 : -1;
+	map->y_direc = (final.y0 < final.y1) ? 1 : -1;
+	map->err = map->deltax + map->deltay;
 	while (1)
 	{
-		mlx_pixel_put(map->mlx_ptr, map->win_ptr, x0 + map->view_x, y0
-				+ map->view_y, map->color);
-		if (x0 == x1 && y0 == y1)
+		mlx_pixel_put(map->mlx_ptr, map->win_ptr, final.x0 + map->view_x,
+		final.y0 + map->view_y, map->color);
+		if (final.x0 == final.x1 && final.y0 == final.y1)
 			break ;
 		map->err_temp = 2 * map->err;
-		if (map->err_temp >= map->dy)
+		if (map->err_temp >= map->deltay)
 		{
-			map->err += map->dy;
-			x0 += map->x_dir;
+			map->err += map->deltay;
+			final.x0 += map->x_direc;
 		}
-		if (map->err_temp <= map->dx)
+		if (map->err_temp <= map->deltax)
 		{
-			map->err += map->dx;
-			y0 += map->y_dir;
+			map->err += map->deltax;
+			final.y0 += map->y_direc;
 		}
 	}
 }
 
-static	void	line(int x0, int y0, int x1, int y1, t_fdf *map)
+static	void	correct_coords(t_fdf *map, t_data final)
 {
-	map->z0 = map->coordinates[y0][x0] * map->altitude;
-	map->z1 = map->coordinates[y1][x1] * map->altitude;
-	map->x0 = x0 * map->zoom;
-	map->x1 = x1 * map->zoom;
-	map->y0 = y0 * map->zoom;
-	map->y1 = y1 * map->zoom;
+	map->z0 = map->coordinates[final.y0][final.x0] * map->altitude;
+	map->z1 = map->coordinates[final.y1][final.x1] * map->altitude;
+	map->x0 = final.x0 * map->zoom;
+	map->x1 = final.x1 * map->zoom;
+	map->y0 = final.y0 * map->zoom;
+	map->y1 = final.y1 * map->zoom;
 	if (map->pers == 'i')
 		isometric(map);
-	x0 = map->x0;
-	y0 = map->y0;
-	x1 = map->x1;
-	y1 = map->y1;
-	draw_pixel(map, x0, y0, x1, y1);
+	final.x0 = map->x0;
+	final.y0 = map->y0;
+	final.x1 = map->x1;
+	final.y1 = map->y1;
+	draw(map, final);
+}
+
+static	void	start(t_fdf *map, int x, int y)
+{
+	t_data	final;
+
+	final.x0 = x;
+	final.y0 = y;
+	if (x < map->max_l - 1)
+	{
+		final.y1 = y;
+		final.x1 = x + 1;
+		correct_coords(map, final);
+	}
+	if (y < map->max_w - 1)
+	{
+		final.x1 = x;
+		final.y1 = y + 1;
+		correct_coords(map, final);
+	}
 }
 
 void			draw_map(t_fdf *map)
 {
-	int x;
-	int y;
+	int		x;
+	int		y;
 
 	y = 0;
 	while (y < map->max_w)
@@ -90,10 +102,7 @@ void			draw_map(t_fdf *map)
 		x = 0;
 		while (x < map->max_l)
 		{
-			if (x < map->max_l - 1)
-				line(x, y, x + 1, y, map);
-			if (y < map->max_w - 1)
-				line(x, y, x, y + 1, map);
+			start(map, x, y);
 			x++;
 		}
 		y++;

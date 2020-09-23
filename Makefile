@@ -6,22 +6,40 @@
 #    By: epalomak <epalomak@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/09/20 03:38:23 by epalomak          #+#    #+#              #
-#    Updated: 2020/09/21 16:39:45 by epalomak         ###   ########.fr        #
+#    Updated: 2020/09/23 17:49:12 by epalomak         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = fdf
 
-SRC = read.c main.c draw.c manage_keys.c
+FDF = fdf.a
+
+SRC = read.c main.c draw.c manage_keys.c helper.c
+
+OBJ = read.o main.o draw.o manage_keys.o helper.o
+
+INC = fdf.h
+
+FLAGS = -Wall -Wextra -Werror
+
+LIBFT = ./libft/libft.a
 
 all: $(NAME)
 
-
  $(NAME):
 	make -C libft
-	gcc libft/libft.a $(SRC) -L /usr/local/lib -lmlx -I /usr/local/X11/include -L/usr/X11/lib -lX11 -lXext -framework OpenGL -framework Appkit -o $(NAME)
+	@cp $(LIBFT) $(FDF)
+	@gcc -c $(FLAGS) $(SRC)
+	@ar rc $(FDF) $(OBJ) $(INC)
+	gcc $(FDF)  -L /usr/local/lib -lmlx  -framework OpenGL -framework Appkit -o $(NAME)
+	@/bin/rm -f $(FDF)
 
 clean:
-	@/bin/rm -f $(NAME)
+	@make -C libft clean
+	@/bin/rm -f *.o
 
-re: clean all
+fclean: clean
+	@make -C libft fclean
+	@/bin/rm -f $(NAME) $(FDF)
+
+re: fclean all
