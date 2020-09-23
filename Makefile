@@ -6,13 +6,13 @@
 #    By: epalomak <epalomak@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2020/09/20 03:38:23 by epalomak          #+#    #+#              #
-#    Updated: 2020/09/20 04:20:36 by epalomak         ###   ########.fr        #
+#    Updated: 2020/09/21 16:39:45 by epalomak         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = fdf
 
-SRC = read.c main.c draw.c
+SRC = read.c main.c draw.c manage_keys.c
 
 all: $(NAME)
 

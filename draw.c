@@ -6,66 +6,80 @@
 /*   By: epalomak <epalomak@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/18 14:28:48 by epalomak          #+#    #+#             */
-/*   Updated: 2020/09/20 05:27:27 by epalomak         ###   ########.fr       */
+/*   Updated: 2020/09/22 16:24:26 by epalomak         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fdf.h"
 
-void isomitric(int *x, int *y, int z)
+void			isometric(t_fdf *map)
 {
-	*x = (*x - *y) * cos(0.8);
-	*y = (*x + *y) * sin(0.8) - z;
+	int	prev_x;
+	int	prev_y;
+
+	prev_x = map->x0;
+	prev_y = map->y0;
+	map->x0 = (prev_x - prev_y) * cos(0.523599);
+	map->y0 = -(map->z0) + (prev_x + prev_y) * sin(0.523599);
+	prev_x = map->x1;
+	prev_y = map->y1;
+	map->x1 = (prev_x - prev_y) * cos(0.523599);
+	map->y1 = -(map->z1) + (prev_x + prev_y) * sin(0.523599);
 }
 
-void	line(int x0, int y0, int x1, int y1, t_fdf *map)
+int				my_abs(int x)
 {
-	int deltax;
-	int deltay;
-	int error;
-	int deltaerr;
-	int diry;
-	int z0;
-	int z1;
+	if (x >= 0)
+		return (x * 1);
+	else
+		return (x * -1);
+}
 
-	z0 = map->coordinates[y0][x0];
-	z1 = map->coordinates[y1][x1];
-	isomitric(&x0, &y0, z0);
-	isomitric(&x1, &y1, z1);
-
-	deltax = x1 - x0;
-	deltay = y1 - y0;
-	error = 0;
-	deltaerr = (MIN(deltax, deltay) + 1) / (MAX(deltax, deltay) + 1);
-	diry = MIN(deltax, deltay);
-	diry = (diry > 0) ? 1 : -1;
-
-	while ((x0 < x1) || y0 < y1)
+void			draw_pixel(t_fdf *map, int x0, int y0, int x1, int y1)
+{
+	map->dx = my_abs(x1 - x0);
+	map->dy = -my_abs(y1 - y0);
+	map->x_dir = (x0 < x1) ? 1 : -1;
+	map->y_dir = (y0 < y1) ? 1 : -1;
+	map->err = map->dx + map->dy;
+	while (1)
 	{
-		mlx_pixel_put(map->mlx_ptr, map->win_ptr, x0, y0, 0xFF800);
-		error = error + deltaerr;
-		if (deltay < deltax)
+		mlx_pixel_put(map->mlx_ptr, map->win_ptr, x0 + map->view_x, y0
+				+ map->view_y, map->color);
+		if (x0 == x1 && y0 == y1)
+			break ;
+		map->err_temp = 2 * map->err;
+		if (map->err_temp >= map->dy)
 		{
-			if (error >= 1)
-			{
-				y0 = y0 + diry;
-				error = error - 1.0;
-			}
-			x0++;
+			map->err += map->dy;
+			x0 += map->x_dir;
 		}
-		else
+		if (map->err_temp <= map->dx)
 		{
-			if (error >= 1)
-			{
-				x0 = x0 + diry;
-				error = error - 1.0;
-			}
-			y0++;
+			map->err += map->dx;
+			y0 += map->y_dir;
 		}
 	}
 }
 
-void	draw_map(t_fdf *map)
+static	void	line(int x0, int y0, int x1, int y1, t_fdf *map)
+{
+	map->z0 = map->coordinates[y0][x0] * map->altitude;
+	map->z1 = map->coordinates[y1][x1] * map->altitude;
+	map->x0 = x0 * map->zoom;
+	map->x1 = x1 * map->zoom;
+	map->y0 = y0 * map->zoom;
+	map->y1 = y1 * map->zoom;
+	if (map->pers == 'i')
+		isometric(map);
+	x0 = map->x0;
+	y0 = map->y0;
+	x1 = map->x1;
+	y1 = map->y1;
+	draw_pixel(map, x0, y0, x1, y1);
+}
+
+void			draw_map(t_fdf *map)
 {
 	int x;
 	int y;
@@ -76,7 +90,7 @@ void	draw_map(t_fdf *map)
 		x = 0;
 		while (x < map->max_l)
 		{
-			if (x < map->max_l- 1)
+			if (x < map->max_l - 1)
 				line(x, y, x + 1, y, map);
 			if (y < map->max_w - 1)
 				line(x, y, x, y + 1, map);
